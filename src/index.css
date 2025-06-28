@@ -1,0 +1,135 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  @apply transition-all;
+}
+
+.mdxeditor-root-contenteditable,
+.mdxeditor-root-contenteditable > div,
+.mdxeditor-root-contenteditable [contenteditable] {
+  @apply h-full;
+}
+
+.mdx {
+  @apply p-4;
+}
+.mdx [contenteditable] {
+  @apply p-6;
+}
+.mdx h1 {
+  @apply font-bold tracking-tight text-6xl mb-2;
+}
+.mdx blockquote::after {
+  content: "";
+  @apply absolute top-0 left-0 w-1 h-full bg-[var(--border)] rounded-lg;
+}
+.mdx ul,
+.mdx ol {
+  @apply ml-4;
+}
+.mdx ul li::marker,
+.mdx ol li::marker {
+  @apply text-white/50;
+}
+.mdx ol li::marker {
+  @apply font-sans;
+}
+.mdx ul li:not([role="checkbox"]) {
+  @apply list-disc pl-2;
+}
+.mdx ul li[role="checkbox"] {
+  @apply !pl-7;
+}
+.mdx ul li[role="checkbox"][aria-checked="true"]::before {
+  background-color: var(--accent) !important;
+  border: transparent;
+}
+.mdx ul li[role="checkbox"][aria-checked="true"] span {
+  color: var(--border) !important;
+}
+.mdx ul li[role="checkbox"] span {
+  position: relative;
+  display: inline-block;
+}
+.mdx ul li[role="checkbox"] span::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 0px;
+  transform: translateY(-50%);
+  transition-duration: 0.1s;
+  width: 0%;
+  border-bottom: 1px solid var(--text);
+}
+.mdx ul li[role="checkbox"][aria-checked="true"] span::after {
+  width: 100%;
+}
+.mdx ul li[role="checkbox"][aria-checked="true"] {
+  text-decoration: none !important;
+}
+.mdx ul li[role="checkbox"]::before {
+  transform: translateY(6px) scale(1.2);
+  border-radius: 6px !important;
+  outline: none !important;
+  border: 1px solid var(--border);
+  box-shadow: none !important;
+  transition-duration: 0.1s;
+}
+.mdx ul li[role="checkbox"]::after {
+  translate: 0px 6px;
+}
+.mdx ol li {
+  @apply list-decimal pl-2;
+}
+.mdx blockquote {
+  @apply pl-6 py-2 relative;
+}
+
+* {
+  color: var(--text);
+}
+body {
+  background-color: var(--bg) !important;
+}
+
+.toolbar {
+  @apply flex gap-1 py-3 px-3 pr-5 rounded-lg mt-2 mb-2 mx-1.5 z-10 bg-[var(--muted)];
+}
+
+.toolbarselectors > * {
+  @apply !m-0;
+}
+.toolbarselectors button:hover {
+  @apply !opacity-75;
+}
+.toolbarselectors button {
+  @apply !mr-1;
+}
+.separator {
+  border-right: 1px solid var(--border);
+  margin-right: 12px !important;
+  margin-left: 8px !important;
+}
+.mdx code > span {
+  background-color: var(--border) !important;
+  border-radius: 4px;
+  display: inline-block;
+  padding-top: 2px;
+  padding-bottom: 2px;
+  padding-left: 12px;
+  padding-right: 12px;
+}
+.toolbarselectors button,
+.toolbarselectors button *,
+.toolbarselectors * {
+  transform: none !important;
+}
+.toolbarselectors button[data-state="on"] svg * {
+  @apply !text-[var(--accent)];
+}
+
+.toolbarselectors * {
+  @apply !bg-transparent;
+}
