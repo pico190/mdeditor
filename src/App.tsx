@@ -49,7 +49,7 @@ const switchs = [
 ];
 
 const qwerty_cols = [
-  ["Escape", "º", "ª", "Tab", "CapsLock", "_ShiftRight", "_ControlLeft"],
+  ["Escape", "º", "ª", "Tab", "CapsLock", "_ShiftLeft", "_ControlLeft"],
   ["F1", "Q", "A", "<", ">", "1", "!", "|", "Meta"],
   ["F2", "W", "S", "Z", "X", "Alt", "2", '"', "@"],
   ["F3", "E", "D", "C", "3", "·", "#"],
@@ -151,8 +151,8 @@ function App() {
               : e.key.toLowerCase() === key.toLowerCase()
           )
         );
-
-        const pan = quertyCol / (qwerty_cols.length - 1);
+        const pan =
+          quertyCol === -1 ? 0 : 1 - (2 * quertyCol) / (qwerty_cols.length - 1);
 
         const sound = new Howl({
           src: [path],
