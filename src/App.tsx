@@ -7,7 +7,9 @@ import {
   InsertThematicBreak,
   ListsToggle,
   MDXEditor,
+  TooltipWrap,
   UndoRedo,
+  type MDXEditorMethods,
 } from "@mdxeditor/editor";
 import { Howl } from "howler";
 import "@mdxeditor/editor/style.css";
@@ -21,21 +23,29 @@ import {
   toolbarPlugin,
   thematicBreakPlugin,
 } from "@mdxeditor/editor";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import themes from "./themes";
 import {
   AltArrowDownLinear,
+  AudioMuted,
+  AudioSound,
   BulletListLinear,
   ChecklistLinear,
   CodeLinear,
+  Copy,
+  FX,
   GridLinear,
   KeyboardLinear,
+  Music,
   NumberedListLinear,
   PalleteLinear,
+  RadialBlur,
+  Save,
   TextBoldLinear,
   TextItalicLinear,
   TextUnderlineLinear,
   ThematicBreakLinear,
+  Tick,
 } from "./icons";
 
 const switchs = [
@@ -112,10 +122,83 @@ function iconHandler(name: string) {
   }
 }
 
+function AudioUpdater({ musicEnabled }: { musicEnabled: boolean }) {
+  const [audioLevel, setAudioLevel] = useState(0);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const analyserRef = useRef<AnalyserNode | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (musicEnabled) {
+      const audioContext = new AudioContext();
+      const audio = new Audio("/socialFeedia.mp3");
+      audio.loop = true;
+      audio.volume = 0.2;
+      audio.crossOrigin = "anonymous";
+
+      const source = audioContext.createMediaElementSource(audio);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 256;
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      source.connect(analyser);
+      analyser.connect(audioContext.destination);
+
+      audio.play();
+
+      audioRef.current = audio;
+      analyserRef.current = analyser;
+
+      const updateLevel = () => {
+        analyser.getByteFrequencyData(dataArray);
+        // promedio de las frecuencias
+        const average =
+          dataArray.reduce((sum, val) => sum + val, 0) / dataArray.length;
+        setAudioLevel(average); // de 0 a 255
+        animationFrameRef.current = requestAnimationFrame(updateLevel);
+      };
+
+      updateLevel();
+    } else {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+        animationFrameRef.current = null;
+      }
+    }
+
+    // limpiar todo si el componente se desmonta
+    return () => {
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [musicEnabled]);
+
+  useEffect(() => {
+    document.documentElement.style.scale = 1 + audioLevel / 1800 + "";
+    document.documentElement.style.overflow = "hidden";
+  }, [audioLevel]);
+
+  return <></>;
+}
+
 function App() {
   const [keyboardsoundsEnabled, setKeyboardsoundsEnabled] = useState(false);
+  const [stereoSounding, setStereoSounding] = useState(false);
+  const [textShadowEnabled, setTextShadowEnabled] = useState(false);
   const [theme, setTheme] = useState(themes.find((t) => t.name === "Dark"));
-  const [loaded, setLoaded] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [musicEnabled, setMusicEnabled] = useState(false);
+  const mdxEditorRef = useRef<MDXEditorMethods>(null);
 
   useEffect(() => {
     if (!window.pressedKeys) window.pressedKeys = new Set();
@@ -129,13 +212,7 @@ function App() {
       if (!window.pressedKeys.has(e.code)) {
         window.pressedKeys.add(e.code);
       }
-      if (
-        document
-          .querySelector("#keyboardsounds")
-          ?.getAttribute("data-isActive") === "false"
-      ) {
-        return;
-      }
+      if (!keyboardsoundsEnabled) return;
       const randomSwitch = switchs[Math.floor(Math.random() * switchs.length)];
 
       let path = "/clicks/" + randomSwitch + ".mp3";
@@ -159,7 +236,7 @@ function App() {
         const sound = new Howl({
           src: [path],
           rate: pitch,
-          stereo: pan,
+          stereo: stereoSounding ? pan : 0.0,
         });
 
         sound.play();
@@ -218,7 +295,7 @@ function App() {
       document.removeEventListener("keydown", keydown);
       document.addEventListener("keyup", keyup);
     };
-  }, []);
+  }, [keyboardsoundsEnabled, stereoSounding]);
 
   return (
     <>
@@ -234,6 +311,13 @@ function App() {
           }`,
         }}
       />
+      <style
+        dangerouslySetInnerHTML={{
+          __html: textShadowEnabled
+            ? `.mdx [contenteditable="true"] * {text-shadow: 0px 0px 50px currentColor;}`
+            : "",
+        }}
+      />
       <div
         style={{ backgroundColor: theme.colors.bg }}
         className="flex flex-col h-[100vh] overflow-y-auto"
@@ -241,6 +325,7 @@ function App() {
         <MDXEditor
           className="p-2 mdx h-full "
           iconComponentFor={iconHandler}
+          ref={mdxEditorRef}
           markdown="# Hello world"
           plugins={[
             headingsPlugin(),
@@ -265,34 +350,123 @@ function App() {
                       <div className="separator" />
                       <CodeToggle />
                     </div>
-                    <div className="ml-auto flex gap-2 items-center">
-                      <div
-                        className="hover:opacity-75 active:scale-95"
-                        data-isActive={keyboardsoundsEnabled}
-                        id="keyboardsounds"
-                        onClick={() => {
-                          setKeyboardsoundsEnabled(!keyboardsoundsEnabled);
-                        }}
-                      >
-                        <KeyboardLinear
-                          className={`size-6 opacity-75 pointer-events-none ${
-                            keyboardsoundsEnabled
-                              ? "*:text-[var(--accent)]"
-                              : "*:text-[var(--text)]"
-                          }`}
-                        />
-                      </div>
-                      <div
-                        className="hover:opacity-75 active:scale-95"
-                        onClick={() => {
-                          const themeIndex = themes.findIndex(
-                            (t) => t.name === theme.name
-                          );
-                          setTheme(themes[(themeIndex + 1) % themes.length]);
-                        }}
-                      >
-                        <PalleteLinear className="size-6 opacity-75 pointer-events-none" />
-                      </div>
+                    <div className="ml-auto flex toolbarselectors gap-1">
+                      <TooltipWrap title="Copy markdown">
+                        <div
+                          className="hover:opacity-75 active:scale-95"
+                          onClick={() => {
+                            setCopied(true);
+                            const md = mdxEditorRef.current?.getMarkdown();
+                            navigator.clipboard.writeText(md);
+                            setTimeout(() => {
+                              setCopied(false);
+                            }, 1000);
+                          }}
+                        >
+                          {copied ? (
+                            <Tick className="size-[1.25rem] opacity-75 pointer-events-none" />
+                          ) : (
+                            <Copy className="size-[1.45rem] opacity-75 pointer-events-none" />
+                          )}
+                        </div>
+                      </TooltipWrap>
+                      <div className="separator" />
+                      <TooltipWrap title="Text shadow">
+                        <div
+                          className="hover:opacity-75 active:scale-95"
+                          data-isActive={textShadowEnabled}
+                          id="shadowEnabled"
+                          onClick={() => {
+                            setTextShadowEnabled(!textShadowEnabled);
+                          }}
+                        >
+                          <RadialBlur
+                            className={`size-[1.6rem] opacity-75 pointer-events-none ${
+                              textShadowEnabled
+                                ? "*:text-[var(--accent)]"
+                                : "*:text-[var(--text)]"
+                            }`}
+                          />
+                        </div>
+                      </TooltipWrap>
+                      <div className="separator" />
+                      <TooltipWrap title="Music">
+                        <div
+                          className="hover:opacity-75 active:scale-95"
+                          onClick={() => {
+                            setMusicEnabled(!musicEnabled);
+                          }}
+                        >
+                          <Music
+                            className={`size-[1.6rem] opacity-75 pointer-events-none ${
+                              musicEnabled
+                                ? "*:text-[var(--accent)]"
+                                : "*:text-[var(--text)]"
+                            }`}
+                          />
+                        </div>
+                      </TooltipWrap>
+                      <div className="separator opacity-0" />
+                      <TooltipWrap title="Stereo sounding">
+                        <div
+                          className="hover:opacity-75 active:scale-95"
+                          data-isActive={stereoSounding}
+                          id="stereosounding"
+                          onClick={() => {
+                            setStereoSounding(!stereoSounding);
+                          }}
+                        >
+                          <FX
+                            className={`size-[1.6rem] opacity-75 pointer-events-none ${
+                              stereoSounding
+                                ? "*:text-[var(--accent)]"
+                                : "*:text-[var(--text)]"
+                            }`}
+                          />
+                        </div>
+                      </TooltipWrap>
+                      <TooltipWrap title="Keyboard sounds">
+                        <div
+                          className="hover:opacity-75 active:scale-95"
+                          data-isActive={keyboardsoundsEnabled}
+                          id="keyboardsounds"
+                          onClick={() => {
+                            setKeyboardsoundsEnabled(!keyboardsoundsEnabled);
+                          }}
+                        >
+                          {keyboardsoundsEnabled ? (
+                            <AudioSound
+                              className={`size-[1.6rem] opacity-75 pointer-events-none ${
+                                keyboardsoundsEnabled
+                                  ? "*:text-[var(--accent)]"
+                                  : "*:text-[var(--text)]"
+                              }`}
+                            />
+                          ) : (
+                            <AudioMuted
+                              className={`size-[1.6rem] opacity-75 pointer-events-none ${
+                                keyboardsoundsEnabled
+                                  ? "*:text-[var(--accent)]"
+                                  : "*:text-[var(--text)]"
+                              }`}
+                            />
+                          )}
+                        </div>
+                      </TooltipWrap>
+                      <div className="separator" />
+                      <TooltipWrap title="Change theme">
+                        <div
+                          className="hover:opacity-75 active:scale-95"
+                          onClick={() => {
+                            const themeIndex = themes.findIndex(
+                              (t) => t.name === theme.name
+                            );
+                            setTheme(themes[(themeIndex + 1) % themes.length]);
+                          }}
+                        >
+                          <PalleteLinear className="size-6 opacity-75 pointer-events-none" />
+                        </div>
+                      </TooltipWrap>
                     </div>
                   </>
                 );
@@ -303,6 +477,7 @@ function App() {
           ]}
         />
       </div>
+      <AudioUpdater musicEnabled={musicEnabled} />
     </>
   );
 }

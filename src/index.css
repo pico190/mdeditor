@@ -26,6 +26,33 @@
   content: "";
   @apply top-0 left-0 w-full h-full rounded-md opacity-25 bg-transparent transition-all absolute;
 }
+@keyframes tooltipAppear {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+._tooltipContent_sects_681::after {
+  content: "";
+  @apply absolute top-0 left-1/2 -translate-x-1/2 bg-[var(--text)] w-[24.5px] h-[8.73px] -translate-y-full;
+  clip-path: path(
+    "M19.799 7.23346L14.6127 0.750613C13.796 -0.270296 12.2354 -0.245918 11.451 0.800003L6.7 7.13468C5.94458 8.1419 4.75903 8.73468 3.5 8.73468H22.9225C21.7074 8.73468 20.5581 8.18232 19.799 7.23346Z"
+  );
+}
+._tooltipContent_sects_681[data-side="top"]::after {
+  translate: 0px 1px;
+}
+._tooltipContent_sects_681[data-side="top"] {
+  translate: 0px 250%;
+}
+._tooltipContent_sects_681 {
+  animation: tooltipAppear 0.1s ease-in-out;
+  @apply !bg-[var(--text)] !text-[var(--bg)] font-sans rounded-lg py-1 px-3 relative;
+}
 .mdxeditor-select-content [role="option"][data-highlighted]::after {
   @apply !bg-[var(--accent)];
 }
@@ -128,7 +155,7 @@ body {
 }
 
 .toolbar {
-  @apply flex gap-1 fixed w-[calc(100%-calc(1.25rem*2))] top-5 left-5 py-3 h-fit min-h-fit px-3 pr-5 rounded-lg z-10 bg-[var(--muted)];
+  @apply flex gap-1 fixed w-[calc(100%-calc(1.25rem*2))] top-5 left-5 py-3 h-fit min-h-fit px-4 pr-5 rounded-xl z-10 bg-[var(--muted)];
 }
 
 .toolbarselectors > * {
