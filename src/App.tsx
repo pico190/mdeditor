@@ -114,19 +114,21 @@ function iconHandler(name: string) {
 
 function App() {
   const [keyboardsoundsEnabled, setKeyboardsoundsEnabled] = useState(false);
-  const [showToolbar, setShowToolbar] = useState(true);
   const [theme, setTheme] = useState(themes.find((t) => t.name === "Dark"));
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    function handleMouseMove() {
-      setShowToolbar(true);
-      if (window.moveTimeout) clearTimeout(window.moveTimeout);
-      window.moveTimeout = setTimeout(() => {
-        setShowToolbar(false);
-      }, 1000);
+    if (!window.pressedKeys) window.pressedKeys = new Set();
+    async function keyup(e: KeyboardEvent) {
+      if (window.pressedKeys.has(e.code)) {
+        window.pressedKeys.delete(e.code);
+      }
     }
     async function keydown(e: KeyboardEvent) {
+      if (window.pressedKeys.has(e.code)) return;
+      if (!window.pressedKeys.has(e.code)) {
+        window.pressedKeys.add(e.code);
+      }
       if (
         document
           .querySelector("#keyboardsounds")
@@ -211,10 +213,10 @@ function App() {
       return play();
     }
     document.addEventListener("keydown", keydown);
-    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("keyup", keyup);
     return () => {
-      document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("keydown", keydown);
+      document.addEventListener("keyup", keyup);
     };
   }, []);
 
@@ -234,10 +236,11 @@ function App() {
       />
       <div
         style={{ backgroundColor: theme.colors.bg }}
-        className="h-[100svh] !overflow-hidden flex flex-col"
+        className="flex flex-col h-[100vh] overflow-y-auto"
       >
         <MDXEditor
-          className="p-2 h-full mdx"
+          className="p-2 mdx h-full "
+          placeholder="Write something..."
           iconComponentFor={iconHandler}
           markdown="# Hello world"
           plugins={[

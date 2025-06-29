@@ -8,14 +8,47 @@
 
 .mdxeditor-root-contenteditable,
 .mdxeditor-root-contenteditable > div,
-.mdxeditor-root-contenteditable [contenteditable] {
-  @apply h-full;
+.mdxeditor-root-contenteditable [contenteditable="true"] {
+  @apply max-h-full;
+}
+.mdxeditor-popup-container *,
+.mdxeditor-popup-container {
+  @apply !z-[10000] transition-none;
+}
+.mdxeditor-root-contenteditable [contenteditable="true"] {
+  @apply overflow-y-auto;
+}
+.mdxeditor-select-content {
+  @apply bg-[var(--muted)] mt-4 p-1 border border-[var(--border)] rounded-lg;
+  box-shadow: none !important;
+}
+.mdxeditor-select-content [role="option"]::after {
+  content: "";
+  @apply top-0 left-0 w-full h-full rounded-md opacity-25 bg-transparent transition-all absolute;
+}
+.mdxeditor-select-content [role="option"][data-highlighted]::after {
+  @apply !bg-[var(--accent)];
 }
 
-.mdx {
-  @apply p-4;
+.mdxeditor-select-content [role="option"][data-highlighted] {
+  @apply !bg-transparent;
 }
-.mdx [contenteditable] {
+.mdxeditor-select-content [role="option"] {
+  @apply py-1.5 px-3 rounded-md transition-all relative;
+}
+.mdxeditor-popup-container {
+  @apply absolute top-0 left-0;
+}
+
+.mdx hr {
+  border: none;
+  @apply my-8;
+  border-bottom: 1px solid var(--border);
+}
+.mdx {
+  @apply p-4 pt-20 flex flex-col;
+}
+.mdx [contenteditable="true"] {
   @apply p-6;
 }
 .mdx h1 {
@@ -95,7 +128,7 @@ body {
 }
 
 .toolbar {
-  @apply flex gap-1 py-3 px-3 pr-5 rounded-lg mt-2 mb-2 mx-1.5 z-10 bg-[var(--muted)];
+  @apply flex gap-1 fixed w-[calc(100%-calc(1.25rem*2))] top-5 left-5 py-3 h-fit min-h-fit px-3 pr-5 rounded-lg z-10 bg-[var(--muted)];
 }
 
 .toolbarselectors > * {
