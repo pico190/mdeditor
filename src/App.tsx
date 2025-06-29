@@ -240,7 +240,6 @@ function App() {
       >
         <MDXEditor
           className="p-2 mdx h-full "
-          placeholder="Write something..."
           iconComponentFor={iconHandler}
           markdown="# Hello world"
           plugins={[
